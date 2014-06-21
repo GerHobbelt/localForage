@@ -285,7 +285,7 @@
         return new Promise(function(resolve, reject) {
             _this.ready().then(function() {
                 var store = db.transaction(dbInfo.storeName, 'readonly')
-                              .objectStore(dbInfo.storeName);
+                    .objectStore(dbInfo.storeName);
 
                 var req = store.openCursor();
                 var keys = [];
@@ -317,6 +317,36 @@
         });
     }
 
+    function iterate(callback) {
+        var _this = this;
+
+        if (callback) {
+            return new Promise(function(resolve, reject) {
+                _this.ready().then(function() {
+                    var store = db.transaction(dbInfo.storeName, 'readonly')
+                        .objectStore(dbInfo.storeName);
+
+                    var req = store.openCursor();
+
+                    req.onsuccess = function() {
+                        var cursor = req.result;
+
+                        if (cursor) {
+                            callback(cursor.value, cursor.key);
+                            cursor.continue();
+                        } else {
+                            resolve();
+                        }
+                    };
+
+                    req.onerror = function() {
+                        reject(req.error);
+                    };
+                });
+            });
+        }
+    }
+
     // Under Chrome the callback is called before the changes (save, clear)
     // are actually made. So we use a defer function which wait that the
     // call stack to be empty.
@@ -339,7 +369,8 @@
         clear: clear,
         length: length,
         key: key,
-        keys: keys
+        keys: keys,
+        iterate: iterate
     };
 
     if (typeof define === 'function' && define.amd) {

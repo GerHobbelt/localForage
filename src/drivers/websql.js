@@ -281,29 +281,60 @@
             _this.ready().then(function() {
                 db.transaction(function(t) {
                     t.executeSql('SELECT key FROM ' + dbInfo.storeName, [],
-                                 function(t, results) {
-                        var length = results.rows.length;
-                        var keys = [];
+                        function(t, results) {
+                            var length = results.rows.length;
+                            var keys = [];
 
-                        for (var i = 0; i < length; i++) {
-                            keys.push(results.rows.item(i).key);
-                        }
+                            for (var i = 0; i < length; i++) {
+                                keys.push(results.rows.item(i).key);
+                            }
 
-                        if (callback) {
-                            callback(keys);
-                        }
+                            if (callback) {
+                                callback(keys);
+                            }
 
-                        resolve(keys);
-                    }, function(t, error) {
-                        if (callback) {
-                            callback(null, error);
-                        }
+                            resolve(keys);
+                        }, function(t, error) {
+                            if (callback) {
+                                callback(null, error);
+                            }
 
-                        reject(error);
-                    });
+                            reject(error);
+                        });
                 });
             });
         });
+    }
+
+    function iterate(callback) {
+        var _this = this;
+        if (callback) {
+            return new Promise(function(resolve, reject) {
+                _this.ready().then(function() {
+                    db.transaction(function(t) {
+                        t.executeSql('SELECT key, value FROM ' + dbInfo.storeName, [],
+                            function(t, results) {
+                                var length = results.rows.length;
+                                var itemFn = results.rows.item;
+
+                                for (var i = 0; i < length; i++) {
+                                    var item = itemFn(i);
+
+                                    callback(item.value, item.key);
+                                }
+
+                                resolve();
+                            }, function(t, error) {
+                                if (callback) {
+                                    callback(null, error);
+                                }
+
+                                reject(error);
+                            });
+                    });
+                });
+            });
+        }
     }
 
     // Converts a buffer to a string to store, serialized, in the backend
@@ -495,7 +526,8 @@
         clear: clear,
         length: length,
         key: key,
-        keys: keys
+        keys: keys,
+        iterate: iterate
     };
 
     if (typeof define === 'function' && define.amd) {

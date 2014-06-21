@@ -146,6 +146,25 @@
         });
     }
 
+    function iterate(callback) {
+        var _this = this;
+        if (callback) {
+            return new Promise(function(resolve) {
+                _this.ready().then(function() {
+                    var length = localStorage.length;
+
+                    for (var i = 0; i < length; i++) {
+                        var key = localStorage.key(i);
+
+                        callback(localStorage.getItem(key), key.substring(keyPrefix.length));
+                    }
+
+                    resolve();
+                });
+            });
+        }
+    }
+
     // Supply the number of keys in the datastore to the callback function.
     function length(callback) {
         var _this = this;
@@ -391,7 +410,8 @@
         clear: clear,
         length: length,
         key: key,
-        keys: keys
+        keys: keys,
+        iterate: iterate
     };
 
     if (typeof define === 'function' && define.amd) {
